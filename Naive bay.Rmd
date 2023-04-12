@@ -1,0 +1,155 @@
+## HEADER ####
+
+Who:KK
+
+What: Naive base algoritham
+
+Last edited: 2023-04-08
+
+## CONTENTS ####
+
+Introduction
+
+Naive bayes
+
+setup
+
+
+## Introduction
+
+Precision agriculture is in trend nowadays. It helps the farmers to get informed 
+decision about the farming strategy.The science of training machines to learn and 
+produce models for future predictions is widely used, and not for nothing. 
+Agriculture plays a critical role in the global economy. With the continuing 
+expansion of the human population understanding worldwide crop yield is central 
+addressing food security challenges and reducing the impacts of climate change.
+Crop yield prediction is an important agricultural problem. The Agricultural yield 
+primarily depends on weather conditions (rain, temperature, etc), pesticides and 
+accurate information about history of crop yield is an important thing for making 
+decisions related to agricultural risk management and future predictions.
+
+N - ratio of Nitrogen content in soil
+P - ratio of Phosphorous content in soil
+K - ratio of Potassium content in soil
+temperature - temperature in degree Celsius
+humidity - relative humidity in %
+ph - ph value of the soil
+rainfall - rainfall in mm
+label - type of crop
+
+Dataset source: https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset
+
+
+
+## Naive bayes
+
+Naive Bayes is a Supervised Machine Learning algorithm based on the Bayes Theorem 
+that is used to solve classification problems by following a probabilistic approach. 
+It is based on the idea that the predictor variables in a Machine Learning model are 
+independent of each other. Meaning that the outcome of a model depends on a set of 
+independent variables that have nothing to do with each other. 
+   
+# Problem statement
+
+Probabilities of which type of crops is suitable for cultivation based on the criteria such as ph, rainfall,temperature, etc...
+ 
+
+
+## Setup
+```{r}
+setwd("C:/Users/DELL/Downloads")
+getwd()
+```
+set working directory to import our dataset
+
+```{r}
+crop <- read.csv("Crop_recommendation.csv")
+```
+Read the data into R environment
+
+# Checking Null values
+```{r}
+library(Amelia)
+missmap(crop)
+```
+
+# Explore the data
+```{r}
+summary(crop)
+names(crop)
+```
+
+# Checking the correlation for pairwise among all the predicators in the dataset.
+```{r}
+cor(crop[ , -8])
+```
+
+```{r}
+library(e1071) #for naive bayes algoritham
+library(caret) #for data preprocessing
+library(caTools) # split the data for train and test
+```
+
+# split the data for test and train
+```{r}
+set.seed(1)
+split <- sample.split(crop$label, SplitRatio = 0.7)
+train_data <- subset(crop, split == "TRUE")
+test_data <- subset(crop, split =="FALSE")
+```
+
+# Deploy the naive bayes model
+```{r}
+set.seed(123) # For reproduceability
+result <- naiveBayes(label ~ ., data = train_data, family = "multinomial")
+result
+```
+
+# predict the model
+```{r}
+predictions <- predict(result, newdata = test_data)
+```
+
+# confusion matrix to check the accuracy of the model
+```{r}
+cm <- table(test_data$label, predictions)
+cm
+```
+
+# model evaluation
+```{r}
+confusionMatrix(cm)
+```
+
+# Result
+
+The overall accuracy of the model is 99.24% which means our model correctly classified
+the observation of dataset.
+
+95% confidence interval is a true population parameter. in our case the CI ranges between
+is 98.24% to 99.75%. which means true accuracy of the model lies between this range.
+
+No information rate is a statstical bench mark that is used to evaluate the classification model which means prior probabilities of the most frequent classes in the dataset.the accuracy must be greater than no information which means making meaningful predictions which is useful for practical information.
+
+Kappa value is the agreement between predicted value and actutal values and it ranges from
+-1 to 1. in general the value below 0.4 indicates poor agreement and and value above 0.8 indicates strong agreement.in our case 0.99 which is suggest the strong agreement.
+
+The McNemar's Test is a statistical test used to determine if there is a significant
+difference between two related proportions. It is often used in cases where the data is paired, such as in a before-and-after study, or when two classifiers are tested on the same dataset in our case its NA which means no paired sample tested or compared with the analysis.
+
+p-value(accuracy > NIR) which is a null hypothesis testing.in our case value is(2.2e-16) less than alpha value(0.05) which means reject null hypotheis which suggest that our model accuracy is significant.
+
+The statistics are also broken down by class. For each class, we have metrics such as 
+sensitivity (the proportion of actual positives that are correctly identified), specificity 
+(the proportion of actual negatives that are correctly identified), positive predictive 
+value (the proportion of predicted positives that are true positives), and negative 
+predictive value (the proportion of predicted negatives that are true negatives). 
+We also have prevalence (the proportion of the data that belongs to each class), 
+detection rate (the proportion of actual positives that are correctly identified),
+and detection prevalence (the proportion of predicted positives).
+
+For example we will take apple the senistivity, specificity, ppv, and npv are all 1
+which means our model correctly classifies as a apple. while prevalance and detection rate are equal prevalence proportion is 0.04545 and correctly detected 0.0454 which is a detection rate.it means it detected all our proportions correctly.detection prevalance is the proportion pf predicted positives which is 0.0454 which is accurate.and balanced accuracy is 1 which is perfect classification.
+
+Overall our model classifies all the crops correctly based on the certain features for the
+cultivation.
